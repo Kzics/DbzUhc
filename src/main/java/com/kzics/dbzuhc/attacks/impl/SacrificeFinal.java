@@ -8,6 +8,7 @@ import org.bukkit.Location;
 import org.bukkit.Material;
 import org.bukkit.Sound;
 import org.bukkit.entity.Entity;
+import org.bukkit.entity.LivingEntity;
 import org.bukkit.entity.Player;
 import org.bukkit.scheduler.BukkitRunnable;
 import org.bukkit.util.Vector;
@@ -34,24 +35,20 @@ public class SacrificeFinal implements Attack {
     public void execute(Player attacker) {
         UUID attackerId = attacker.getUniqueId();
 
-        // Vérifie le cooldown global
         if (!cooldownManager.isCooldownReady(attackerId, getName())) {
             attacker.sendMessage("§cSacrifice Final est en recharge !");
             return;
         }
 
-        // Vérifie si l'attaque a déjà été utilisée pendant cette transformation
         if (usedDuringTransformation.contains(attackerId)) {
             attacker.sendMessage("§cVous ne pouvez utiliser Sacrifice Final qu'une seule fois par transformation !");
             return;
         }
 
-        // Active le cooldown et marque l'attaque comme utilisée pour cette transformation
         cooldownManager.setCooldown(attackerId, getName(), COOLDOWN);
         usedDuringTransformation.add(attackerId);
 
-        // Trouver les ennemis dans un rayon de 30 blocs
-        List<Entity> enemies = attacker.getWorld().getEntities().stream()
+        List<LivingEntity> enemies = attacker.getWorld().getLivingEntities().stream()
                 .filter(p -> p != attacker && p.getLocation().distance(attacker.getLocation()) <= 30)
                 .collect(Collectors.toList());
 
@@ -60,24 +57,20 @@ public class SacrificeFinal implements Attack {
             return;
         }
 
-        // Sélectionner deux ennemis au hasard
-        Entity enemy1 = enemies.get(0);
-        Entity enemy2 = enemies.get(1);
+        LivingEntity enemy1 = enemies.get(0);
+        LivingEntity enemy2 = enemies.get(1);
 
-        // Enfermer les joueurs dans une cage et infliger des dégâts périodiques
         Location cageCenter = attacker.getLocation();
-        Set<Entity> playersInCage = new HashSet<>();
+        Set<LivingEntity> playersInCage = new HashSet<>();
         playersInCage.add(attacker);
         playersInCage.add(enemy1);
         playersInCage.add(enemy2);
 
-        // Téléporter les joueurs à côté du lanceur
         Vector offset = new Vector(2, 0, 2);
         attacker.teleport(cageCenter.clone().add(offset));
         enemy1.teleport(cageCenter.clone().subtract(offset));
         enemy2.teleport(cageCenter.clone().add(offset.multiply(-1)));
 
-        // Créer la cage
         createCage(cageCenter);
 
         new BukkitRunnable() {
@@ -86,7 +79,6 @@ public class SacrificeFinal implements Attack {
             @Override
             public void run() {
                 if (ticks >= MAX_DURATION) {
-                    // Fin du temps imparti, téléportation des joueurs à leur position initiale
                     playersInCage.forEach(p -> p.teleport(cageCenter));
                     attacker.sendMessage("§eLe temps est écoulé, tout le monde est téléporté à sa position initiale.");
                     cancel();
@@ -94,13 +86,10 @@ public class SacrificeFinal implements Attack {
                 }
 
                 if (ticks % DAMAGE_INTERVAL == 0) {
-                    // Infliger des dégâts périodiques
-                    //playersInCage.forEach(p -> p(1.0, attacker)); // 0.5 cœur = 1.0 dégâts
+                    playersInCage.forEach(p -> p.damage(1.0, attacker)); // 0.5 cœur = 1.0 dégâts
                 }
 
-                // Vérifier si Majin Végéta ou les deux ennemis sont morts
                 if (attacker.isDead() || (enemy1.isDead() && enemy2.isDead())) {
-                    // Fin du combat, téléportation des joueurs à leur position initiale
                     playersInCage.forEach(p -> p.teleport(cageCenter));
                     attacker.sendMessage("§eFin du combat, tout le monde est téléporté à sa position initiale.");
                     cancel();
@@ -108,7 +97,7 @@ public class SacrificeFinal implements Attack {
 
                 ticks++;
             }
-        }.runTaskTimer(DbzUHC.getInstance(), 0L, 1L); // Exécution toutes les 1 tick (50 ms)
+        }.runTaskTimer(DbzUHC.getInstance(), 0L, 1L);
     }
 
     @Override
@@ -117,12 +106,11 @@ public class SacrificeFinal implements Attack {
     }
 
     private void createCage(Location center) {
-        int size = 5; // Taille de la cage (5x5x5)
+        int size = 15;
 
         for (int x = -size / 2; x <= size / 2; x++) {
             for (int y = -size / 2; y <= size / 2; y++) {
                 for (int z = -size / 2; z <= size / 2; z++) {
-                    // Ajouter les blocs seulement aux bords de la cage
                     if (Math.abs(x) == size / 2 || Math.abs(y) == size / 2 || Math.abs(z) == size / 2) {
                         center.getWorld().getBlockAt(center.clone().add(x, y, z)).setType(Material.BARRIER);
                     }

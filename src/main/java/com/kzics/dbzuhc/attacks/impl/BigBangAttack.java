@@ -45,7 +45,6 @@ public class BigBangAttack implements Attack {
             return;
         }
 
-        // Active le cooldown et marque l'attaque comme utilisée pour cette transformation
         cooldownManager.setCooldown(attackerId, getName(), COOLDOWN);
         usedDuringTransformation.add(attackerId);
 
@@ -54,21 +53,19 @@ public class BigBangAttack implements Attack {
         Location startLocation = attacker.getEyeLocation();
         Vector direction = startLocation.getDirection().normalize().multiply(0.5);
 
-        // Gestion du déplacement et de l'affichage de la sphère
         new BukkitRunnable() {
             private int ticks = 0;
             private final Location currentLocation = startLocation.clone();
 
             @Override
             public void run() {
-                if (ticks >= MAX_TICKS) { // Temps écoulé
+                if (ticks >= MAX_TICKS) {
                     cancel();
                     return;
                 }
 
                 currentLocation.add(direction);
 
-                // Génère une sphère parfaite avec des particules bleues
                 for (double phi = 0; phi <= Math.PI; phi += Math.PI / 10) {
                     for (double theta = 0; theta <= 2 * Math.PI; theta += Math.PI / 10) {
                         double x = SPHERE_RADIUS * Math.sin(phi) * Math.cos(theta);
@@ -76,14 +73,12 @@ public class BigBangAttack implements Attack {
                         double z = SPHERE_RADIUS * Math.cos(phi);
 
                         Location particleLocation = currentLocation.clone().add(x, y, z);
-                        sendParticle(attacker, particleLocation, 0, 0, 1); // RGB pour bleu
+                        sendParticle(attacker, particleLocation, 0, 0, 255); // RGB pour bleu
                     }
                 }
 
-                // Émet un son pour signaler le déplacement de la boule
                 currentLocation.getWorld().playSound(currentLocation, Sound.FIREWORK_LAUNCH, 0.5f, 1.0f);
 
-                // Vérifie si la boule touche un bloc solide
                 if (currentLocation.getBlock().getType().isSolid()) {
                     explode(currentLocation, attacker);
                     cancel();
@@ -135,7 +130,7 @@ public class BigBangAttack implements Attack {
         PacketPlayOutWorldParticles packet = new PacketPlayOutWorldParticles(
                 EnumParticle.REDSTONE, true,
                 (float) location.getX(), (float) location.getY(), (float) location.getZ(),
-                0,1,0, 0, 0);
+                r / 255, g / 255, b / 255, 1, 0);
         ((CraftPlayer) player).getHandle().playerConnection.sendPacket(packet);
     }
 }

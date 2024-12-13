@@ -6,6 +6,7 @@ import com.kzics.dbzuhc.teams.CampType;
 import com.kzics.dbzuhc.transformation.Transformation;
 import com.kzics.dbzuhc.transformation.impl.MajinVegetaTransformation;
 import com.kzics.dbzuhc.transformation.impl.SuperVegetaTransformation;
+import com.kzics.dbzuhc.transformation.impl.VegetaBlueTransformation;
 import com.kzics.dbzuhc.util.TransformationItemUtil;
 import org.bukkit.Bukkit;
 import org.bukkit.Material;
@@ -21,6 +22,7 @@ public class VegetaRole extends AdvancedRole {
         super("Vegeta");
         transformations.add(new SuperVegetaTransformation());
         transformations.add(new MajinVegetaTransformation());
+        transformations.add(new VegetaBlueTransformation());
     }
 
     @Override
